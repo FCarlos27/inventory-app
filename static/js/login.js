@@ -1,7 +1,20 @@
 const formulario = document.getElementById("form-login");
 const inputClave = document.getElementById("clave");
+const botonVerClave = document.getElementById("btn-ver-clave");
 const errorEl = document.getElementById("login-error");
 const boton = formulario.querySelector("button[type='submit']");
+
+botonVerClave.addEventListener("click", () => {
+  const oculta = inputClave.type === "password";
+  inputClave.type = oculta ? "text" : "password";
+  botonVerClave.textContent = oculta ? "Ocultar" : "Mostrar";
+  botonVerClave.setAttribute("aria-pressed", String(oculta));
+  botonVerClave.setAttribute(
+    "aria-label",
+    oculta ? "Ocultar clave" : "Mostrar clave"
+  );
+  inputClave.focus();
+});
 
 function mostrarError(mensaje) {
   errorEl.textContent = mensaje;
