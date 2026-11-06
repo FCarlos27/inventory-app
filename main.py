@@ -126,6 +126,8 @@ async def cabeceras_seguridad(request: Request, call_next):
     response.headers.setdefault(
         "Permissions-Policy", "camera=(), microphone=(), geolocation=()"
     )
+    if request.url.path.startswith("/static/"):
+        response.headers.setdefault("Cache-Control", "no-cache")
     if request.url.scheme == "https":
         response.headers.setdefault(
             "Strict-Transport-Security", "max-age=31536000"

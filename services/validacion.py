@@ -209,8 +209,8 @@ class ValidacionService:
             },
             "escaneados": escaneados,
             "resultados": [dict(resultado) for resultado in self.resultados],
-            # La app anterior habilitaba la exportación al completar la orden.
-            "puede_exportar": completada,
+            # Se puede exportar apenas hay resultados, aunque falten S/N.
+            "puede_exportar": bool(self.resultados),
             "completada": completada,
         }
 

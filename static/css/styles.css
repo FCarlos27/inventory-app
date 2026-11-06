@@ -842,6 +842,7 @@ tbody tr:last-child td {
   opacity: 0;
   transform: translateY(8px);
   transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
   z-index: 20;
 }
 

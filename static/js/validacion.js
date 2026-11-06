@@ -511,12 +511,48 @@ scanInput.addEventListener("keydown", (evento) => {
   }
 });
 
-btnExportar.addEventListener("click", () => {
-  if (!estado?.puede_exportar) {
+async function exportar() {
+  if (!estado?.puede_exportar || btnExportar.disabled) {
     return;
   }
-  window.location.assign("/api/validacion/exportar");
-});
+
+  btnExportar.disabled = true;
+
+  try {
+    const respuesta = await fetch("/api/validacion/exportar", {
+      cache: "no-store",
+    });
+
+    if (respuesta.status === 401) {
+      window.location.assign("/login");
+      return;
+    }
+
+    if (!respuesta.ok) {
+      const datos = await respuesta.json().catch(() => null);
+      throw new Error(datos?.detail || `Error HTTP ${respuesta.status}`);
+    }
+
+    const archivo = await respuesta.blob();
+    const url = URL.createObjectURL(archivo);
+    const enlace = document.createElement("a");
+    enlace.href = url;
+    enlace.download = "verificacion.csv";
+    document.body.append(enlace);
+    enlace.click();
+    enlace.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    mostrarToast("CSV de verificación descargado.", "ok");
+  } catch (error) {
+    const mensaje = `No se pudo exportar: ${error.message}`;
+    feedback(mensaje, "error");
+    mostrarToast(mensaje, "error");
+  } finally {
+    btnExportar.disabled = !estado?.puede_exportar;
+  }
+}
+
+btnExportar.addEventListener("click", exportar);
 
 document.getElementById("btn-salir")?.addEventListener("click", cerrarSesion);
 
