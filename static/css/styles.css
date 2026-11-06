@@ -1,0 +1,120 @@
+:root {
+  --fondo: #f4f6f8;
+  --superficie: #ffffff;
+  --texto: #1f2933;
+  --texto-suave: #62707c;
+  --borde: #d9e0e6;
+  --acento: #1f6feb;
+  --ok-fondo: #e6f4ea;
+  --ok-texto: #1e7b34;
+  --error-fondo: #fdecea;
+  --error-texto: #b3261e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--fondo);
+  color: var(--texto);
+}
+
+.encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 2rem;
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borde);
+}
+
+.encabezado h1 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.subtitulo {
+  margin: 0.15rem 0 0;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+
+.estado {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.estado--pendiente {
+  background: #eef1f4;
+  color: var(--texto-suave);
+}
+
+.estado--ok {
+  background: var(--ok-fondo);
+  color: var(--ok-texto);
+}
+
+.estado--error {
+  background: var(--error-fondo);
+  color: var(--error-texto);
+}
+
+.contenido {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.contenido h2 {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+}
+
+.modos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.tarjeta {
+  position: relative;
+  padding: 1.5rem;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+}
+
+.tarjeta h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.tarjeta p {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.tarjeta--inactiva {
+  opacity: 0.6;
+}
+
+.etiqueta {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}

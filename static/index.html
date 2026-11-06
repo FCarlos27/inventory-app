@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inventario Depósito</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+  <header class="encabezado">
+    <div>
+      <h1>Inventario Depósito</h1>
+      <p class="subtitulo">Control y verificación de activos</p>
+    </div>
+    <span id="estado-servidor" class="estado estado--pendiente">Conectando…</span>
+  </header>
+
+  <main class="contenido">
+    <h2>Modos de trabajo</h2>
+    <section class="modos">
+      <article class="tarjeta tarjeta--inactiva">
+        <h3>1. Validación de orden</h3>
+        <p>Carga una orden en CSV y valida los S/N escaneados.</p>
+        <span class="etiqueta">Próximamente</span>
+      </article>
+
+      <article class="tarjeta tarjeta--inactiva">
+        <h3>2. Ingesta directa</h3>
+        <p>Captura S/N y P/N contra el catálogo de modelos.</p>
+        <span class="etiqueta">Próximamente</span>
+      </article>
+    </section>
+  </main>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
