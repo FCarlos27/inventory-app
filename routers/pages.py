@@ -1,7 +1,8 @@
 from pathlib import Path
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import FileResponse
+from routers.dependencies import verificar_acceso
 
 router = APIRouter(include_in_schema=False)
 
@@ -17,18 +18,13 @@ def _pagina(nombre: str) -> FileResponse:
 
 
 @router.get("/")
-def index() -> FileResponse:
-    """Sirve la pantalla principal de la aplicación."""
+def index(acceso=Depends(verificar_acceso)) -> FileResponse:
     return _pagina("index.html")
 
-
 @router.get("/login")
-def login() -> FileResponse:
-    """Sirve la pantalla de acceso con clave compartida."""
+def login() -> FileResponse: # <- Esta queda sin Depends porque es pública
     return _pagina("login.html")
 
-
 @router.get("/validacion")
-def validacion() -> FileResponse:
-    """Sirve el modo de validación estricta de orden."""
+def validacion(acceso=Depends(verificar_acceso)) -> FileResponse:
     return _pagina("validacion.html")

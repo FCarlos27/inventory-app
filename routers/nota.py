@@ -1,13 +1,14 @@
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, HTTPException, UploadFile, Depends
 from starlette.concurrency import run_in_threadpool
 
+from routers.dependencies import verificar_acceso
 from services.nota import (
     MAX_BYTES_NOTA,
     NotaInvalida,
     extraer_nota_archivos,
 )
 
-router = APIRouter(prefix="/api/nota", tags=["nota"])
+router = APIRouter(prefix="/api/nota", tags=["nota"], dependencies=[Depends(verificar_acceso)])
 
 
 @router.post("/extraer")

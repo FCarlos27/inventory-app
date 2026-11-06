@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
+from routers.dependencies import verificar_acceso, obtener_sesion
 from services.catalogo import CatalogoInvalido
 from services.ingesta import IngestaError
 from services.sesiones import Sesion
 
-router = APIRouter(prefix="/api/ingesta", tags=["ingesta"])
+router = APIRouter(prefix="/api/ingesta", tags=["ingesta"], dependencies=[Depends(verificar_acceso)])
 
 
 class EscaneoRequest(BaseModel):
@@ -19,12 +20,8 @@ class ModeloRequest(BaseModel):
     omitir: bool = False
 
 
-def get_sesion(request: Request) -> Sesion:
-    return request.state.sesion
-
-
 @router.get("/estado")
-def estado(sesion: Sesion = Depends(get_sesion)) -> dict:
+def estado(sesion: Sesion = Depends(obtener_sesion)) -> dict:
     """Estado actual de la sesión de ingesta."""
     with sesion.lock:
         return sesion.ingesta.snapshot()
@@ -33,7 +30,7 @@ def estado(sesion: Sesion = Depends(get_sesion)) -> dict:
 @router.post("/escanear")
 def escanear(
     payload: EscaneoRequest,
-    sesion: Sesion = Depends(get_sesion),
+    sesion: Sesion = Depends(obtener_sesion),
 ) -> dict:
     """Procesa un código: primero S/N, después P/N."""
     try:
@@ -48,7 +45,7 @@ def escanear(
 @router.post("/modelo")
 def resolver_modelo(
     payload: ModeloRequest,
-    sesion: Sesion = Depends(get_sesion),
+    sesion: Sesion = Depends(obtener_sesion),
 ) -> dict:
     """Agrega un P/N al catálogo y completa la captura pendiente."""
     try:
@@ -66,21 +63,21 @@ def resolver_modelo(
 
 
 @router.post("/cancelar")
-def cancelar(sesion: Sesion = Depends(get_sesion)) -> dict:
+def cancelar(sesion: Sesion = Depends(obtener_sesion)) -> dict:
     """Cancela la captura pendiente sin registrar el activo."""
     with sesion.lock:
         return sesion.ingesta.cancelar_pendiente()
 
 
 @router.post("/reiniciar")
-def reiniciar(sesion: Sesion = Depends(get_sesion)) -> dict:
+def reiniciar(sesion: Sesion = Depends(obtener_sesion)) -> dict:
     """Limpia los activos capturados en esta sesión."""
     with sesion.lock:
         return sesion.ingesta.reiniciar()
 
 
 @router.get("/exportar")
-def exportar(sesion: Sesion = Depends(get_sesion)) -> Response:
+def exportar(sesion: Sesion = Depends(obtener_sesion)) -> Response:
     """Descarga los activos capturados como CSV."""
     with sesion.lock:
         contenido = sesion.ingesta.exportar_csv()

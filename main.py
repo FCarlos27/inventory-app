@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from routers import acceso, nota, pages, sistema, validacion
+from routers.dependencies import NoAutorizadoException
 from services.acceso import (
     CLAVE_PATH,
     COOKIE_ACCESO,
@@ -38,7 +39,6 @@ if clave_generada:
     print(f"  Archivo: {CLAVE_PATH}")
     print("=" * 64 + "\n")
 
-RUTAS_PUBLICAS = {"/login", "/api/login", "/api/logout", "/api/health"}
 MAX_CUERPO_JSON = 64 * 1024
 MAX_CUERPO_ORDEN = 6 * 1024 * 1024
 MAX_CUERPO_NOTA = 21 * 1024 * 1024
@@ -56,15 +56,6 @@ CSP = (
 )
 
 
-def _es_publica(path: str) -> bool:
-    return (
-        path in RUTAS_PUBLICAS
-        or path == "/static"
-        or path.startswith("/static/")
-        or path == "/favicon.ico"
-    )
-
-
 def _limite_cuerpo(path: str) -> int:
     if path == "/api/validacion/orden":
         return MAX_CUERPO_ORDEN
@@ -72,47 +63,26 @@ def _limite_cuerpo(path: str) -> int:
         return MAX_CUERPO_NOTA
     return MAX_CUERPO_JSON
 
+@app.exception_handler(NoAutorizadoException)
+async def no_autorizado_handler(request: Request, exc: NoAutorizadoException):
+    """Maneja el acceso denegado: JSON para la API, redirección para la UI."""
+    if request.url.path.startswith("/api/"):
+        return JSONResponse({"detail": "Acceso no autorizado."}, status_code=401)
+    return RedirectResponse("/login", status_code=303)
 
 @app.middleware("http")
-async def sesion_y_acceso(request: Request, call_next):
-    """Exige la clave de acceso y asigna una sesión de trabajo."""
-    path = request.url.path
-
+async def limite_tamano_cuerpo(request: Request, call_next):
+    """Verifica únicamente que el cuerpo de la petición no exceda el límite."""
     if request.method in ("POST", "PUT", "PATCH"):
         largo = request.headers.get("content-length")
-        if largo and largo.isdigit() and int(largo) > _limite_cuerpo(path):
+        if largo and largo.isdigit() and int(largo) > _limite_cuerpo(request.url.path):
             return JSONResponse(
                 {"detail": "La solicitud supera el tamaño permitido."},
                 status_code=413,
             )
+    return await call_next(request)
 
-    if not _es_publica(path):
-        token = request.cookies.get(COOKIE_ACCESO)
-        if not request.app.state.acceso.valido(token):
-            if path.startswith("/api/"):
-                return JSONResponse(
-                    {"detail": "Acceso no autorizado."},
-                    status_code=401,
-                )
-            return RedirectResponse("/login", status_code=303)
 
-    creada = False
-    if path.startswith(RUTAS_CON_SESION):
-        session_id, sesion, creada = request.app.state.sessions.obtener_o_crear(
-            request.cookies.get(COOKIE_NAME)
-        )
-        request.state.sesion = sesion
-
-    response = await call_next(request)
-    if creada:
-        response.set_cookie(
-            COOKIE_NAME,
-            session_id,
-            httponly=True,
-            samesite="lax",
-            path="/",
-        )
-    return response
 
 
 @app.middleware("http")
