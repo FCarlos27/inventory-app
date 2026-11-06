@@ -3,7 +3,7 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 
-from routers import ingesta, pages, sistema
+from routers import ingesta, pages, sistema, validacion
 from services.almacen import CATALOGO_PATH
 from services.catalogo import CatalogoModelos
 from services.sesiones import COOKIE_NAME, RUTAS_CON_SESION, SessionStore
@@ -13,7 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent
 app = FastAPI(
     title="Inventario Depósito",
     description="Control y verificación de inventario en depósito.",
-    version="0.2.0",
+    version="0.3.0",
 )
 
 app.state.catalogo = CatalogoModelos(CATALOGO_PATH)
@@ -47,3 +47,4 @@ app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 app.include_router(pages.router)
 app.include_router(sistema.router)
 app.include_router(ingesta.router)
+app.include_router(validacion.router)
