@@ -26,6 +26,7 @@ const estadoNota = document.getElementById("estado-nota");
 const revisionNota = document.getElementById("revision-nota");
 const advertenciasNota = document.getElementById("advertencias-nota");
 const tablaNota = document.getElementById("tabla-nota");
+const btnCompletarNota = document.getElementById("btn-completar-nota");
 const btnConfirmarNota = document.getElementById("btn-confirmar-nota");
 const btnCancelarNota = document.getElementById("btn-cancelar-nota");
 
@@ -165,22 +166,94 @@ function filasNota() {
   return [...tablaNota.querySelectorAll("tr")];
 }
 
+const CAMPOS_NOTA = ["brand", "model", "processor", "ram"];
+
+function entradasNota() {
+  return filasNota()
+    .map((fila) => {
+      const entradas = {};
+      for (const entrada of fila.querySelectorAll("input[data-campo]")) {
+        entradas[entrada.dataset.campo] = entrada;
+      }
+      return entradas;
+    })
+    .filter((fila) => fila.serial?.value.trim());
+}
+
+function hayCamposVaciosNota() {
+  return entradasNota().some((fila) =>
+    CAMPOS_NOTA.some((campo) => !fila[campo]?.value.trim()),
+  );
+}
+
 function actualizarConfirmarNota() {
   if (revisionNota.hidden) {
+    btnCompletarNota.disabled = true;
     btnConfirmarNota.disabled = true;
     return;
   }
 
-  const cantidad = filasNota().filter(
-    (fila) => datosFilaNota(fila).serial,
-  ).length;
+  const cantidad = entradasNota().length;
   btnConfirmarNota.disabled = cantidad === 0 || ocupadoNota;
+  btnCompletarNota.disabled = !hayCamposVaciosNota() || ocupadoNota;
   estadoNota.hidden = false;
   estadoNota.textContent = cantidad
     ? `${cantidad} serial${cantidad === 1 ? "" : "es"} listo${
         cantidad === 1 ? "" : "s"
       } para cargar.`
     : "No hay seriales para cargar. Corrige la nota o usa el CSV de la orden.";
+}
+
+function completarCamposNota() {
+  const filas = entradasNota();
+  let rellenos = 0;
+
+  for (const campo of CAMPOS_NOTA) {
+    let anterior = "";
+    for (const fila of filas) {
+      const entrada = fila[campo];
+      if (!entrada) {
+        continue;
+      }
+      const valor = entrada.value.trim();
+      if (valor) {
+        anterior = valor;
+      } else if (anterior) {
+        entrada.value = anterior;
+        rellenos += 1;
+      }
+    }
+
+    let siguiente = "";
+    for (let indice = filas.length - 1; indice >= 0; indice -= 1) {
+      const entrada = filas[indice][campo];
+      if (!entrada) {
+        continue;
+      }
+      const valor = entrada.value.trim();
+      if (valor) {
+        siguiente = valor;
+      } else if (siguiente) {
+        entrada.value = siguiente;
+        rellenos += 1;
+      }
+    }
+  }
+
+  if (rellenos === 0) {
+    mostrarToast("No hay campos vacíos para completar.", "info");
+    return;
+  }
+
+  feedback(
+    `Se completaron ${rellenos} campo${rellenos === 1 ? "" : "s"} vacío${
+      rellenos === 1 ? "" : "s"
+    }. Revisa que correspondan al mismo modelo.`,
+    "neutral",
+  );
+  mostrarToast("Campos vacíos completados. Revisa la tabla.", "ok");
+  actualizarConfirmarNota();
+  enfocarEscaneo();
 }
 
 function limpiarRevisionNota() {
@@ -190,6 +263,7 @@ function limpiarRevisionNota() {
   advertenciasNota.hidden = true;
   estadoNota.hidden = true;
   estadoNota.textContent = "";
+  btnCompletarNota.disabled = true;
   btnConfirmarNota.disabled = true;
 }
 
@@ -490,6 +564,7 @@ btnCargar.addEventListener("click", () => archivoOrden.click());
 archivoOrden.addEventListener("change", subirOrden);
 btnCargarNota.addEventListener("click", () => archivoNota.click());
 archivoNota.addEventListener("change", extraerNota);
+btnCompletarNota.addEventListener("click", completarCamposNota);
 btnConfirmarNota.addEventListener("click", confirmarNota);
 btnCancelarNota.addEventListener("click", () => {
   limpiarRevisionNota();
