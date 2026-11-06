@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ingesta directa · Inventario Depósito</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+  <header class="encabezado">
+    <div>
+      <a class="volver" href="/">← Inicio</a>
+      <h1>Ingesta directa</h1>
+      <p class="subtitulo">Captura S/N y P/N para registrar activos</p>
+    </div>
+    <div class="encabezado__derecha">
+      <nav class="nav-modos" aria-label="Modos de trabajo">
+        <a class="nav-modo" href="/validacion">Validación</a>
+        <a class="nav-modo is-active" href="/ingesta" aria-current="page">Ingesta</a>
+      </nav>
+      <span id="estado-servidor" class="estado estado--pendiente">Conectando…</span>
+    </div>
+  </header>
+
+  <main class="contenido contenido--app">
+    <section class="barra-orden">
+      <div class="barra-orden__info">
+        <div>
+          <p class="dato-principal">Captura de activos</p>
+          <p class="dato-secundario">
+            Escanea el S/N, después el P/N. Si el P/N no existe, se pide marca y modelo.
+          </p>
+        </div>
+      </div>
+      <div class="barra-orden__acciones">
+        <span id="contador" class="contador">Equipos: 0</span>
+        <button id="btn-reiniciar" class="boton boton--secundario" type="button">
+          Nueva sesión
+        </button>
+      </div>
+    </section>
+
+    <section id="feedback" class="feedback feedback--neutral" role="status" aria-live="polite">
+      Escanea el S/N del equipo
+    </section>
+
+    <section class="panel-camara" aria-labelledby="camara-titulo">
+      <div class="panel-camara__cabecera">
+        <div>
+          <h2 id="camara-titulo">Escanear con la cámara</h2>
+          <p class="dato-secundario">
+            Apunta al código de barras o QR. La detección es automática.
+          </p>
+        </div>
+        <span id="camara-estado" class="estado estado--pendiente">Apagada</span>
+      </div>
+
+      <div id="lector-camara" class="lector-camara" hidden></div>
+
+      <div id="camara-confirmacion" class="camara-confirmacion" hidden>
+        <p class="camara-confirmacion__etiqueta">Código detectado</p>
+        <p id="camara-codigo" class="camara-confirmacion__codigo"></p>
+        <p class="dato-secundario">
+          Confirma para enviarlo o vuelve a escanear.
+        </p>
+        <div class="camara-confirmacion__acciones">
+          <button id="btn-camara-confirmar" class="boton boton--primario" type="button">
+            Confirmar
+          </button>
+          <button id="btn-camara-descartar" class="boton boton--secundario" type="button">
+            Volver a escanear
+          </button>
+        </div>
+      </div>
+
+      <div id="camara-zoom" class="camara-zoom" hidden>
+        <label for="camara-zoom-input">Zoom</label>
+        <input id="camara-zoom-input" type="range" min="1" max="1" step="0.1" value="1">
+        <output id="camara-zoom-valor" for="camara-zoom-input">1.0×</output>
+      </div>
+
+      <div class="panel-camara__acciones">
+        <button id="btn-camara-activar" class="boton boton--primario" type="button">
+          Activar cámara
+        </button>
+        <button id="btn-camara-detener" class="boton boton--secundario" type="button" hidden>
+          Detener cámara
+        </button>
+      </div>
+      <p id="camara-ayuda" class="ayuda">
+        La cámara requiere HTTPS o abrir la app desde localhost.
+      </p>
+    </section>
+
+    <section class="panel-escaneo">
+      <label for="scan-input" class="etiqueta-campo">S/N o P/N</label>
+      <div class="fila-escaneo">
+        <input
+          id="scan-input"
+          class="entrada-escaneo"
+          type="text"
+          placeholder="Escanea el S/N y presiona Enter"
+          autocomplete="off"
+          autocapitalize="characters"
+          spellcheck="false"
+          autofocus
+        >
+        <button id="btn-escanear" class="boton boton--primario" type="button">
+          Agregar
+        </button>
+        <button id="btn-cancelar" class="boton boton--secundario" type="button" disabled>
+          Cancelar S/N
+        </button>
+      </div>
+      <p id="pista-escaneo" class="ayuda">
+        También puedes escribir el código o usar una pistola USB.
+      </p>
+    </section>
+
+    <section class="panel-tabla">
+      <div class="panel-tabla__cabecera">
+        <h2>Activos registrados</h2>
+        <span id="resumen-tabla" class="dato-secundario">0 activos</span>
+      </div>
+      <div class="tabla-contenedor">
+        <table>
+          <thead>
+            <tr>
+              <th>S/N</th>
+              <th>P/N</th>
+              <th>Marca</th>
+              <th>Modelo</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-activos"></tbody>
+        </table>
+        <p id="tabla-vacia" class="tabla-vacia">Todavía no hay activos registrados.</p>
+      </div>
+    </section>
+
+    <section class="acciones-finales">
+      <button id="btn-exportar" class="boton boton--exito" type="button" disabled>
+        Exportar activos (CSV)
+      </button>
+    </section>
+  </main>
+
+  <dialog id="modal-modelo" class="modal" aria-labelledby="modal-titulo">
+    <form id="form-modelo" class="modal__contenido">
+      <h2 id="modal-titulo">P/N nuevo</h2>
+      <p>
+        El P/N <strong id="modal-pn"></strong> no está en el catálogo.
+        Ingresa la marca y el modelo para agregarlo.
+      </p>
+      <p class="dato-secundario">S/N capturado: <span id="modal-serial"></span></p>
+
+      <label class="campo">
+        Marca
+        <input id="modal-marca" type="text" maxlength="80" required autocomplete="off">
+      </label>
+
+      <label class="campo">
+        Modelo
+        <input id="modal-modelo-input" type="text" maxlength="120" autocomplete="off">
+      </label>
+
+      <p id="modal-error" class="mensaje-error" hidden></p>
+
+      <div class="modal__acciones">
+        <button id="btn-guardar-modelo" class="boton boton--primario" type="submit">
+          Guardar y registrar
+        </button>
+        <button id="btn-omitir" class="boton boton--secundario" type="button">
+          Omitir
+        </button>
+        <button id="btn-cancelar-captura" class="boton boton--peligro" type="button">
+          Cancelar captura
+        </button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" hidden></div>
+  <script type="module" src="/static/js/ingesta.js"></script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Acceso · Inventario Depósito</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body class="pantalla-login">
+  <main class="login">
+    <h1>Inventario Depósito</h1>
+    <p class="subtitulo">Ingresa la clave de acceso para continuar.</p>
+
+    <form id="form-login" class="login__formulario">
+      <label class="campo" for="clave">
+        Clave de acceso
+        <input
+          id="clave"
+          name="clave"
+          type="password"
+          autocomplete="current-password"
+          maxlength="128"
+          required
+          autofocus
+        >
+      </label>
+      <button class="boton boton--primario" type="submit">Entrar</button>
+      <p id="login-error" class="mensaje-error" hidden></p>
+    </form>
+  </main>
+
+  <script type="module" src="/static/js/login.js"></script>
+</body>
+</html>

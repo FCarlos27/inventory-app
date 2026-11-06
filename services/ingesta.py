@@ -3,6 +3,7 @@ import io
 from typing import Any
 
 from services.catalogo import CatalogoModelos
+from services.csv_seguro import celda_segura
 
 FIELDNAMES = ["serial", "p_n", "brand", "model", "status"]
 ESTADO_INGRESADO = "INGRESADO"
@@ -32,7 +33,7 @@ class IngestaService:
             raise IngestaError("El código escaneado no puede estar vacío.")
         if self.pending_pn is not None:
             raise IngestaError(
-                "Hay un P/N pendiente de marca y modelo. Resolvelo antes de seguir."
+                "Hay un P/N pendiente de marca y modelo. Resuélvelo antes de seguir."
             )
 
         if self.pending_serial is None:
@@ -48,7 +49,7 @@ class IngestaService:
             return {
                 "evento": "sn_capturado",
                 "serial": codigo,
-                "mensaje": "S/N capturado. Escaneá el P/N.",
+                "mensaje": "S/N capturado. Escanea el P/N.",
                 "estado": self.snapshot(),
             }
 
@@ -62,7 +63,7 @@ class IngestaService:
                 "p_n": p_n,
                 "mensaje": (
                     f"El P/N {p_n} no está en el catálogo. "
-                    "Ingresá marca y modelo."
+                    "Ingresa marca y modelo."
                 ),
                 "estado": self.snapshot(),
             }
@@ -179,7 +180,13 @@ class IngestaService:
         salida = io.StringIO()
         escritor = csv.DictWriter(salida, fieldnames=FIELDNAMES)
         escritor.writeheader()
-        escritor.writerows(self.activos)
+        escritor.writerows(
+            {
+                campo: celda_segura(valor)
+                for campo, valor in activo.items()
+            }
+            for activo in self.activos
+        )
 
         # BOM para que Excel abra correctamente los acentos.
         return "\ufeff" + salida.getvalue()

@@ -2,3 +2,11 @@ __pycache__/
 *.py[cod]
 .venv/
 .DS_Store
+
+# Certificados locales y claves privadas
+*.pem
+*key*.pem
+static/rootCA.crt
+
+# Clave de acceso generada localmente
+data/clave.txt

@@ -2,9 +2,11 @@ import csv
 import io
 from typing import Any
 
+from services.csv_seguro import celda_segura
+
 MAX_BYTES_ORDEN = 5 * 1024 * 1024
-FIELDNAMES = ["serial", "brand", "model", "status"]
-ESTADO_VERIFICADO = "VERIFICADO"
+FIELDNAMES = ["serial", "brand", "model", "processor", "ram"]
+LONGITUD_MINIMA_CODIGO = 4
 
 
 class OrdenInvalida(ValueError):
@@ -21,7 +23,7 @@ def _decodificar(contenido: bytes | str) -> str:
 
 
 def leer_orden(contenido: bytes | str) -> dict[str, dict[str, str]]:
-    """Devuelve {serial: {brand, model}} a partir del CSV de la orden.
+    """Devuelve {serial: {brand, model, processor, ram}} a partir del CSV.
 
     Solo la columna ``serial`` es obligatoria. Los encabezados se aceptan
     sin distinguir mayúsculas ni espacios, y los seriales se normalizan a
@@ -46,6 +48,8 @@ def leer_orden(contenido: bytes | str) -> dict[str, dict[str, str]]:
         items[serial] = {
             "brand": (fila.get("brand") or "").strip() or "N/A",
             "model": (fila.get("model") or "").strip() or "N/A",
+            "processor": (fila.get("processor") or "").strip(),
+            "ram": (fila.get("ram") or "").strip(),
         }
 
     if not items:
@@ -64,6 +68,8 @@ class ValidacionService:
         self.order_filename = ""
         self.scanned: set[str] = set()
         self.resultados: list[dict[str, str]] = []
+        self.por_sufijo: dict[str, list[str]] = {}
+        self.ambiguos = 0
 
     def cargar_orden(
         self, contenido: bytes | str, filename: str = ""
@@ -75,9 +81,17 @@ class ValidacionService:
         self.order_filename = (filename or "").strip()
         self.scanned.clear()
         self.resultados.clear()
+        self._indexar_sufijos()
+
+        mensaje = f"Orden cargada: {len(expected)} ítems."
+        if self.ambiguos:
+            mensaje += (
+                f" {self.ambiguos} terminación(es) de 4 dígitos son ambiguas;"
+                " en esos casos escribe el S/N completo."
+            )
 
         return {
-            "mensaje": f"Orden cargada: {len(expected)} ítems.",
+            "mensaje": mensaje,
             "estado": self.snapshot(),
         }
 
@@ -90,20 +104,20 @@ class ValidacionService:
             return {
                 "evento": "sin_orden",
                 "serial": codigo,
-                "mensaje": "Cargá una orden antes de escanear.",
+                "mensaje": "Carga una orden antes de escanear.",
                 "estado": self.snapshot(),
             }
 
-        if codigo in self.scanned:
-            return {
-                "evento": "duplicado",
-                "serial": codigo,
-                "mensaje": f"El S/N {codigo} ya fue verificado.",
-                "estado": self.snapshot(),
-            }
+        if (
+            len(codigo) < LONGITUD_MINIMA_CODIGO
+            and codigo not in self.expected
+        ):
+            raise ValueError(
+                "Escribe al menos los últimos 4 dígitos del S/N."
+            )
 
-        item = self.expected.get(codigo)
-        if item is None:
+        coincidencias = self._coincidencias(codigo)
+        if not coincidencias:
             return {
                 "evento": "fuera_de_orden",
                 "serial": codigo,
@@ -111,25 +125,59 @@ class ValidacionService:
                 "estado": self.snapshot(),
             }
 
+        pendientes = [
+            serial for serial in coincidencias if serial not in self.scanned
+        ]
+        if not pendientes:
+            if len(coincidencias) == 1:
+                mensaje = f"El S/N {coincidencias[0]} ya fue verificado."
+            else:
+                mensaje = (
+                    f"Los S/N que terminan en {codigo} ya fueron verificados."
+                )
+            return {
+                "evento": "duplicado",
+                "serial": codigo,
+                "mensaje": mensaje,
+                "estado": self.snapshot(),
+            }
+
+        if len(coincidencias) > 1:
+            cantidad = len(pendientes)
+            verbo = "coincide" if cantidad == 1 else "coinciden"
+            return {
+                "evento": "ambiguo",
+                "serial": codigo,
+                "coincidencias": cantidad,
+                "mensaje": (
+                    f"{cantidad} S/N {verbo} con {codigo}. "
+                    "Escribe el S/N completo para identificarlo."
+                ),
+                "estado": self.snapshot(),
+            }
+
+        serial = pendientes[0]
+        item = self.expected[serial]
         activo = {
-            "serial": codigo,
+            "serial": serial,
             "brand": item["brand"],
             "model": item["model"],
-            "status": ESTADO_VERIFICADO,
+            "processor": item["processor"],
+            "ram": item["ram"],
         }
-        self.scanned.add(codigo)
+        self.scanned.add(serial)
         self.resultados.append(activo)
 
         completada = len(self.scanned) == len(self.expected)
         return {
             "evento": "verificado",
-            "serial": codigo,
+            "serial": serial,
             "activo": activo,
             "completada": completada,
             "mensaje": (
                 "¡Orden completada con éxito!"
                 if completada
-                else f"S/N {codigo} verificado."
+                else f"S/N {serial} verificado."
             ),
             "estado": self.snapshot(),
         }
@@ -139,6 +187,8 @@ class ValidacionService:
         self.order_filename = ""
         self.scanned.clear()
         self.resultados.clear()
+        self.por_sufijo.clear()
+        self.ambiguos = 0
 
         return {
             "mensaje": "Validación reiniciada.",
@@ -155,6 +205,7 @@ class ValidacionService:
                 "filename": self.order_filename,
                 "cargada": bool(self.expected),
                 "total": total,
+                "ambiguos": self.ambiguos,
             },
             "escaneados": escaneados,
             "resultados": [dict(resultado) for resultado in self.resultados],
@@ -170,7 +221,35 @@ class ValidacionService:
         salida = io.StringIO()
         escritor = csv.DictWriter(salida, fieldnames=FIELDNAMES)
         escritor.writeheader()
-        escritor.writerows(self.resultados)
+        escritor.writerows(
+            {
+                campo: celda_segura(valor)
+                for campo, valor in resultado.items()
+            }
+            for resultado in self.resultados
+        )
 
         # BOM para que Excel abra correctamente los acentos.
         return "\ufeff" + salida.getvalue()
+
+    def _indexar_sufijos(self) -> None:
+        self.por_sufijo = {}
+        for serial in self.expected:
+            sufijo = serial[-LONGITUD_MINIMA_CODIGO:]
+            self.por_sufijo.setdefault(sufijo, []).append(serial)
+
+        self.ambiguos = sum(
+            1
+            for seriales in self.por_sufijo.values()
+            if len(seriales) > 1
+        )
+
+    def _coincidencias(self, codigo: str) -> list[str]:
+        if len(codigo) == LONGITUD_MINIMA_CODIGO:
+            return list(self.por_sufijo.get(codigo, ()))
+
+        return [
+            serial
+            for serial in self.expected
+            if serial == codigo or serial.endswith(codigo)
+        ]

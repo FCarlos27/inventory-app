@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Validación de orden · Inventario Depósito</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+  <header class="encabezado">
+    <div>
+      <a class="volver" href="/">← Inicio</a>
+      <h1>Validación de orden</h1>
+      <p class="subtitulo">Modo estricto · Los S/N deben pertenecer a la orden</p>
+    </div>
+    <div class="encabezado__derecha">
+      <nav class="nav-modos" aria-label="Modos de trabajo">
+        <a class="nav-modo is-active" href="/validacion" aria-current="page">Validación</a>
+      </nav>
+      <span id="estado-servidor" class="estado estado--pendiente">Conectando…</span>
+      <button id="btn-salir" class="boton boton--secundario boton--compacto" type="button">
+        Salir
+      </button>
+    </div>
+  </header>
+
+  <main class="contenido contenido--app">
+    <section class="barra-orden">
+      <div class="barra-orden__info">
+        <button id="btn-cargar-orden" class="boton boton--primario" type="button">
+          Cargar orden (CSV)
+        </button>
+        <input id="archivo-orden" type="file" accept=".csv,text/csv" hidden>
+        <div>
+          <p id="nombre-orden" class="dato-principal">Ninguna orden cargada</p>
+          <p id="detalle-orden" class="dato-secundario">
+            Selecciona el CSV de la orden para comenzar.
+          </p>
+        </div>
+      </div>
+      <div class="barra-orden__acciones">
+        <span id="progreso" class="contador">0 / 0</span>
+        <button id="btn-reiniciar" class="boton boton--secundario" type="button">
+          Nueva validación
+        </button>
+      </div>
+    </section>
+
+    <section id="feedback" class="feedback feedback--idle" role="status" aria-live="polite">
+      Carga una orden para comenzar
+    </section>
+
+    <section class="panel-nota">
+      <div class="panel-nota__cabecera">
+        <div>
+          <h2>Nota de entrega</h2>
+          <p class="ayuda">
+            Sube una o más fotos o PDF. Extrae los datos y revísalos antes
+            de generar la orden.
+          </p>
+        </div>
+        <button id="btn-cargar-nota" class="boton boton--primario" type="button">
+          Cargar nota
+        </button>
+        <input
+          id="archivo-nota"
+          type="file"
+          accept=".pdf,application/pdf,image/jpeg,image/png"
+          multiple
+          hidden
+        >
+      </div>
+
+      <p id="estado-nota" class="dato-secundario" hidden></p>
+
+      <div id="revision-nota" hidden>
+        <ul id="advertencias-nota" class="advertencias" role="status"></ul>
+        <div class="tabla-contenedor">
+          <table>
+            <thead>
+              <tr>
+                <th>S/N</th>
+                <th>Marca</th>
+                <th>Modelo</th>
+                <th>Procesador</th>
+                <th>RAM</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-nota"></tbody>
+          </table>
+        </div>
+        <p class="ayuda">
+          Corrige lo que haga falta. Las filas con S/N vacío se omiten.
+        </p>
+        <div class="panel-nota__confirmacion">
+          <button
+            id="btn-confirmar-nota"
+            class="boton boton--exito"
+            type="button"
+            disabled
+          >
+            Confirmar y cargar orden
+          </button>
+          <button id="btn-cancelar-nota" class="boton boton--secundario" type="button">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel-escaneo">
+      <label for="scan-input" class="etiqueta-campo">Últimos 4 dígitos del S/N</label>
+      <div class="fila-escaneo">
+        <input
+          id="scan-input"
+          class="entrada-escaneo"
+          type="text"
+          placeholder="Ej. 1234 y presiona Enter"
+          autocomplete="off"
+          autocapitalize="characters"
+          spellcheck="false"
+          maxlength="64"
+          autofocus
+        >
+        <button id="btn-escanear" class="boton boton--primario" type="button">
+          Verificar
+        </button>
+      </div>
+      <p class="ayuda">
+        Escribe los últimos 4 dígitos o usa una pistola USB. Si hay
+        coincidencias, escribe el S/N completo.
+      </p>
+    </section>
+
+    <section class="panel-tabla">
+      <div class="panel-tabla__cabecera">
+        <h2>S/N verificados</h2>
+        <span id="resumen-tabla" class="dato-secundario">0 verificados</span>
+      </div>
+      <div class="tabla-contenedor">
+        <table>
+          <thead>
+            <tr>
+              <th>S/N</th>
+              <th>Marca</th>
+              <th>Modelo</th>
+              <th>Procesador</th>
+              <th>RAM</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-resultados"></tbody>
+        </table>
+        <p id="tabla-vacia" class="tabla-vacia">Todavía no hay S/N verificados.</p>
+      </div>
+    </section>
+
+    <section class="acciones-finales">
+      <button id="btn-exportar" class="boton boton--exito" type="button" disabled>
+        Exportar verificación (CSV)
+      </button>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" hidden></div>
+  <script type="module" src="/static/js/validacion.js"></script>
+</body>
+</html>

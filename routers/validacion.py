@@ -7,7 +7,7 @@ from fastapi import (
     Response,
     UploadFile,
 )
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from services.sesiones import Sesion
 from services.validacion import MAX_BYTES_ORDEN, OrdenInvalida
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/api/validacion", tags=["validacion"])
 
 
 class EscaneoRequest(BaseModel):
-    codigo: str
+    codigo: str = Field(min_length=1, max_length=64)
 
 
 def get_sesion(request: Request) -> Sesion:
@@ -48,7 +48,7 @@ async def cargar_orden(
         with sesion.lock:
             return sesion.validacion.cargar_orden(
                 contenido,
-                file.filename or "",
+                (file.filename or "")[:255],
             )
     except OrdenInvalida as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -91,5 +91,6 @@ def exportar(sesion: Sesion = Depends(get_sesion)) -> Response:
         media_type="text/csv",
         headers={
             "Content-Disposition": 'attachment; filename="verificacion.csv"',
+            "Cache-Control": "no-store",
         },
     )

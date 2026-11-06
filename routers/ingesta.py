@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from services.catalogo import CatalogoInvalido
 from services.ingesta import IngestaError
@@ -9,13 +9,13 @@ router = APIRouter(prefix="/api/ingesta", tags=["ingesta"])
 
 
 class EscaneoRequest(BaseModel):
-    codigo: str
+    codigo: str = Field(min_length=1, max_length=64)
 
 
 class ModeloRequest(BaseModel):
-    p_n: str
-    brand: str | None = None
-    model: str | None = None
+    p_n: str = Field(min_length=1, max_length=64)
+    brand: str | None = Field(default=None, max_length=80)
+    model: str | None = Field(default=None, max_length=80)
     omitir: bool = False
 
 
@@ -96,5 +96,6 @@ def exportar(sesion: Sesion = Depends(get_sesion)) -> Response:
         media_type="text/csv",
         headers={
             "Content-Disposition": 'attachment; filename="activos.csv"',
+            "Cache-Control": "no-store",
         },
     )

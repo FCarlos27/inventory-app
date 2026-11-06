@@ -13,26 +13,39 @@
       <h1>Inventario Depósito</h1>
       <p class="subtitulo">Control y verificación de activos</p>
     </div>
-    <span id="estado-servidor" class="estado estado--pendiente">Conectando…</span>
+    <div class="encabezado__derecha">
+      <span id="estado-servidor" class="estado estado--pendiente">Conectando…</span>
+      <button id="btn-salir" class="boton boton--secundario boton--compacto" type="button">
+        Salir
+      </button>
+    </div>
   </header>
 
   <main class="contenido">
-    <h2>Modos de trabajo</h2>
-    <section class="modos">
-      <article class="tarjeta tarjeta--inactiva">
-        <h3>1. Validación de orden</h3>
-        <p>Carga una orden en CSV y valida los S/N escaneados.</p>
-        <span class="etiqueta">Próximamente</span>
-      </article>
+    <div class="intro">
+      <h2>Validación de orden</h2>
+      <p>
+        Carga el CSV de la orden y verifica cada equipo con los últimos 4
+        dígitos de su S/N.
+      </p>
+    </div>
 
-      <article class="tarjeta tarjeta--inactiva">
-        <h3>2. Ingesta directa</h3>
-        <p>Captura S/N y P/N contra el catálogo de modelos.</p>
-        <span class="etiqueta">Próximamente</span>
-      </article>
+    <section class="modos">
+      <a class="tarjeta tarjeta--modo" href="/validacion">
+        <span class="tarjeta__numero">1</span>
+        <h3>Validación de orden</h3>
+        <p>Verifica que cada S/N pertenezca a la orden cargada.</p>
+        <span class="tarjeta__accion">Ingresar →</span>
+      </a>
+    </section>
+
+    <section class="nota">
+      <strong>Atajos:</strong> escribe los últimos 4 dígitos y presiona
+      <kbd>Enter</kbd>. Si hay más de un S/N con la misma terminación, escribe
+      el S/N completo.
     </section>
   </main>
 
-  <script src="/static/js/app.js"></script>
+  <script type="module" src="/static/js/app.js"></script>
 </body>
 </html>
