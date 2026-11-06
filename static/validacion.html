@@ -28,14 +28,14 @@
   <main class="contenido contenido--app">
     <section class="barra-orden">
       <div class="barra-orden__info">
-        <button id="btn-cargar-orden" class="boton boton--primario" type="button">
+        <button id="btn-cargar-orden" class="boton boton--primario" type="button" hidden>
           Cargar orden (CSV)
         </button>
         <input id="archivo-orden" type="file" accept=".csv,text/csv" hidden>
         <div>
           <p id="nombre-orden" class="dato-principal">Ninguna orden cargada</p>
           <p id="detalle-orden" class="dato-secundario">
-            Selecciona el CSV de la orden para comenzar.
+            Carga la nota de entrega para comenzar.
           </p>
         </div>
       </div>
@@ -48,7 +48,7 @@
     </section>
 
     <section id="feedback" class="feedback feedback--idle" role="status" aria-live="polite">
-      Carga una orden para comenzar
+      Carga una nota de entrega para comenzar
     </section>
 
     <section class="panel-nota">

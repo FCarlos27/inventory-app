@@ -57,7 +57,7 @@ function renderizar() {
       (orden.ambiguos
         ? ` ${orden.ambiguos} terminación(es) de 4 dígitos son ambiguas.`
         : "")
-    : "Selecciona el CSV de la orden para comenzar.";
+    : "Carga la nota de entrega para comenzar.";
 
   progreso.textContent = `${estado.escaneados} / ${total}`;
   resumenTabla.textContent = `${resultados.length} verificado${
@@ -94,7 +94,7 @@ function mensajeSegunEstado() {
       "neutral",
     ];
   }
-  return ["Carga una orden para comenzar", "idle"];
+  return ["Carga una nota de entrega para comenzar", "idle"];
 }
 
 function crearEntradaNota(valor, campo, esSerial = false) {
