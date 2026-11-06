@@ -5,7 +5,7 @@ from typing import Any
 from services.csv_seguro import celda_segura
 
 MAX_BYTES_ORDEN = 5 * 1024 * 1024
-FIELDNAMES = ["serial", "brand", "model", "processor", "ram"]
+ENCABEZADOS_EXPORTACION = ["S/N", "Marca", "Modelo", "Procesador", "RAM"]
 LONGITUD_MINIMA_CODIGO = 4
 
 
@@ -219,12 +219,19 @@ class ValidacionService:
             return ""
 
         salida = io.StringIO()
-        escritor = csv.DictWriter(salida, fieldnames=FIELDNAMES)
+        escritor = csv.DictWriter(
+            salida, fieldnames=ENCABEZADOS_EXPORTACION
+        )
         escritor.writeheader()
         escritor.writerows(
             {
-                campo: celda_segura(valor)
-                for campo, valor in resultado.items()
+                "S/N": celda_segura(resultado.get("serial", "")),
+                "Marca": celda_segura(resultado.get("brand", "")),
+                "Modelo": celda_segura(resultado.get("model", "")),
+                "Procesador": celda_segura(
+                    resultado.get("processor", "")
+                ),
+                "RAM": celda_segura(resultado.get("ram", "")),
             }
             for resultado in self.resultados
         )
